@@ -31,7 +31,7 @@
         </div>
     </div>
 
-    <!-- Formulario de Venta con ID "formVenta" -->
+    <!-- Formulario de Venta -->
     <form id="formVenta" action="{{ route('ventas.store') }}" method="POST">
         @csrf
         <div class="card">
@@ -53,19 +53,17 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <!-- ARREGLO DE ANCHO (col-md-12) -->
-                    <div class="col-md-6"> 
+                    <div class="col-md-12"> 
                         <div class="form-group">
                             <label for="cantidad">Cantidad:</label>
                             <input type="number" id="cantidad" name="cantidad" class="form-control" min="1" required disabled> 
                             <p class="text-danger" id="error_stock" style="display:none;"></p>
                         </div>
                     </div>
-                     <!-- ARREGLO DE ANCHO (col-md-12) -->
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
                             <label for="tipo_pago">Tipo de Pago:</label>
-                            <select id="tipo_pago" name="tipo_pago" class="form-control" required style="height: 35px;">
+                            <select id="tipo_pago" name="tipo_pago" class="form-control" required style="height: 45px;">
                                 <option value="efectivo">Efectivo</option>
                                 <option value="debito">Débito</option>
                                 <option value="credito">Crédito</option>
@@ -102,7 +100,6 @@
         productos.forEach(producto => {
             const productImage = producto.imagen ? `/storage/${producto.imagen}` : 'https://placehold.co/300x200/e2e2e2/9a9a9a?text=Sin+Imagen';
             
-            // ARREGLO BUG: El name del input es "producto_id"
             const productCardHTML = `
                 <div class="col-lg-4 col-md-6">
                     <input class="form-check-input" type="radio" 
@@ -113,8 +110,14 @@
                            style="display:none;" required>
                     
                     <label class="card card-product text-center" for="producto_${producto.id}" style="cursor: pointer; margin-bottom: 0; border: 2px solid transparent;">
-                        <div class="card-image" style="height: 180px; overflow: hidden;">
-                            <img class="img-fluid" src="${productImage}" alt="${producto.nombre}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <div class="card-image" style="height: 180px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <!-- 
+                              ==========================================================
+                               ARREGLO: Cambiado 'object-fit: cover' a 'object-fit: contain'
+                               para que la imagen no se corte.
+                              ==========================================================
+                            -->
+                            <img class="img-fluid" src="${productImage}" alt="${producto.nombre}" style="width: 100%; height: 100%; object-fit: contain;">
                         </div>
                         <div class="card-body">
                             <h5 class="card-title" style="font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -156,10 +159,8 @@
     
     // Asigna los listeners a los radio buttons
     function attachRadioListeners() {
-        // ARREGLO BUG: Busca por 'name="producto_id"'
         document.querySelectorAll('input[name="producto_id"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                // ... (El código de selección visual es el mismo) ...
                 document.querySelectorAll('.card-product').forEach(c => {
                     c.style.border = '2px solid transparent';
                     c.querySelector('.radio-select-indicator').classList.remove('btn-primary');
@@ -171,11 +172,9 @@
                 card.querySelector('.radio-select-indicator').classList.add('btn-primary');
                 card.querySelector('.radio-select-indicator').classList.remove('btn-outline-primary');
 
-                // Guarda los datos
                 productoSeleccionadoId = this.value;
                 stockDisponible = parseInt(this.dataset.stock, 10);
                 
-                // Habilita y valida la cantidad
                 const cantidadInput = document.getElementById('cantidad');
                 cantidadInput.max = stockDisponible;
                 cantidadInput.disabled = false;
@@ -194,7 +193,7 @@
         filterAndRenderProducts(this.value);
     });
 
-    // Función de validación de cantidad (sin cambios)
+    // Función de validación de cantidad
     function validarCantidad() {
         const cantidadInput = document.getElementById('cantidad');
         const errorStockDiv = document.getElementById('error_stock');
@@ -221,7 +220,7 @@
         }
     }
 
-    // Listener para el campo de cantidad (sin cambios)
+    // Listener para el campo de cantidad
     const cantidadInput = document.getElementById('cantidad');
     if(cantidadInput) {
         cantidadInput.addEventListener('input', function() {
@@ -230,7 +229,7 @@
         });
     }
 
-    // Función para actualizar el botón de registro (sin cambios)
+    // Función para actualizar el botón de registro
     function actualizarBotonRegistrar() {
         const btnRegistrar = document.getElementById('btn_registrar_venta');
         const productoSeleccionado = productoSeleccionadoId !== null;
@@ -243,8 +242,7 @@
         }
     }
 
-    // ARREGLO BUG: El listener se adhiere al ID "formVenta"
-    // y ya no necesita inyectar el campo 'producto_id'.
+    // Listener para el submit del formulario
     document.getElementById('formVenta').addEventListener('submit', function(event) {
         if (productoSeleccionadoId === null) {
             document.getElementById('error_no_seleccion').style.display = 'block';
@@ -258,7 +256,6 @@
         }
         
         // ¡Ya no es necesario añadir el 'producto_id' oculto!
-        // El radio button 'producto_id' se enviará automáticamente.
     });
 
     // Carga inicial de productos
