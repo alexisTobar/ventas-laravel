@@ -1,162 +1,270 @@
 @extends('layout')
 
+@section('page-title', 'Registrar Nueva Venta')
+
 @section('content')
 
-<h1>Registrar Nueva Venta</h1>
-<hr>
-
-@if ($errors->any())
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong>¡Ups! Hubo un problema:</strong>
-    <ul>
-        @foreach ($errors->all() as $error)
-        <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
-<div class="card">
-    <div class="card-header">
-        Formulario de Venta
+    <!-- Bloque de Alertas -->
+    @if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>¡Ups! Hubo un problema:</strong>
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
-    <div class="card mb-4 shadow-sm">
+    @endif
+
+    <!-- Formulario de Búsqueda -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">1. Buscar Producto (por nombre)</h5>
+        </div>
         <div class="card-body">
-            <div class="mb-2">
-                <label for="buscadorProductos" class="form-label fs-5 fw-bold">Buscar Producto (por nombre):</label>
-                <input type="text" id="buscadorProductos" class="form-control form-control-lg" placeholder="Escribe el nombre del producto para filtrar..." autofocus>
+            <div class="form-group">
+                <input type="text" id="buscadorProductos" class="form-control" placeholder="Escribe el nombre del producto para filtrar..." autofocus>
             </div>
         </div>
     </div>
 
-    <form action="{{ route('ventas.store') }}" method="POST">
+    <!-- Formulario de Venta con ID "formVenta" -->
+    <form id="formVenta" action="{{ route('ventas.store') }}" method="POST">
         @csrf
-        <div class="card-body">
-
-            <div class="mb-3">
-                <label class="form-label">1. Seleccione un Producto:</label>
-
-                <div style="height: 600px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 5px; background-color: #f8f9fa;">
-
-                    <div class="row">
-
-                        @forelse ($productos as $producto)
-                        <div class="col-md-4 mb-3 producto-filterable-card">
-
-                            <div class="card h-70 shadow-sm product-card" style="cursor: pointer;">
-
-                                <img src="{{ asset('storage/' . $producto->imagen) }}"
-                                    class="card-img-top"
-                                    alt="{{ $producto->nombre }}"
-                                    style="height: 180px; object-fit: cover; border-bottom: 1px solid #ddd;">
-
-                                <div class="card-body text-center d-flex flex-column">
-                                    <h5 class="card-title" style="font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                        {{ $producto->nombre }}
-                                    </h5>
-
-                                    <p class="card-text text-success mb-1">
-                                        ${{ number_format($producto->precio, 0) }}
-                                    </p>
-                                    <p class="card-text text-muted" style="font-size: 0.8rem;">
-                                        Stock: {{ $producto->stock }}
-                                    </p>
-
-                                    <div class="form-check d-inline-block mt-auto">
-                                        <input class="form-check-input" type="radio" name="producto_id" id="prod-{{ $producto->id }}" value="{{ $producto->id }}" required>
-                                        <label class="form-check-label" for="prod-{{ $producto->id }}">
-                                            Seleccionar
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="col-12">
-                            <p class="text-center text-muted">No hay productos con imagen para mostrar.</p>
-                        </div>
-                        @endforelse
-                    </div>
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">2. Seleccionar Producto</h5>
+                <p class="text-danger" id="error_no_seleccion" style="display:none;">Por favor, selecciona un producto.</p>
+            </div>
+            <div class="card-body">
+                <!-- Contenedor de la cuadrícula de productos -->
+                <div id="lista_productos" class="row" style="max-height: 400px; overflow-y: auto; padding: 10px;">
+                    <!-- Los productos se cargarán aquí por JavaScript -->
                 </div>
-                <hr>
-                <label class="form-label">2. Complete los detalles de la venta:</label>
+            </div>
+        </div>
 
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">3. Detalles de la Venta</h5>
+            </div>
+            <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="cantidad" class="form-label">Cantidad:</label>
-                        <input type="number" id="cantidad" name="cantidad" min="1" class="form-control" required>
+                    <!-- ARREGLO DE ANCHO (col-md-12) -->
+                    <div class="col-md-6"> 
+                        <div class="form-group">
+                            <label for="cantidad">Cantidad:</label>
+                            <input type="number" id="cantidad" name="cantidad" class="form-control" min="1" required disabled> 
+                            <p class="text-danger" id="error_stock" style="display:none;"></p>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="tipo_pago" class="form-label">Tipo de Pago:</label>
-                        <select name="tipo_pago" id="tipo_pago" class="form-select" required>
-                            <option value="efectivo">Efectivo</option>
-                            <option value="debito">Débito</option>
-                            <option value="credito">Crédito</option>
-                        </select>
+                     <!-- ARREGLO DE ANCHO (col-md-12) -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="tipo_pago">Tipo de Pago:</label>
+                            <select id="tipo_pago" name="tipo_pago" class="form-control" required style="height: 35px;">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="debito">Débito</option>
+                                <option value="credito">Crédito</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="card-footer text-end">
-                <a href="{{ route('productos.index') }}" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Registrar Venta</button>
+            <div class="card-footer text-right">
+                <a href="{{ route('dashboard') }}" class="btn btn-secondary btn-round">Cancelar</a>
+                <button type="submit" class="btn btn-primary btn-round" id="btn_registrar_venta" disabled>Registrar Venta</button>
             </div>
+        </div>
     </form>
-</div>
+@endsection
 
+@section('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    // Almacena los productos cargados para evitar llamadas API innecesarias
+    let allProducts = [];
+    let productoSeleccionadoId = null;
+    let stockDisponible = 0;
 
-        // CAMBIO 2: Cambiamos el selector de '.card' a '.product-card'
-        const productCards = document.querySelectorAll('.product-card');
-
-        productCards.forEach(card => {
-            card.addEventListener('click', (event) => {
-
-                // Evitamos que el clic en el label o el input dispare el evento dos veces
-                if (event.target.tagName === 'INPUT' || event.target.tagName === 'LABEL') {
-                    return;
-                }
-
-                const radio = card.querySelector('input[type="radio"]');
-                if (radio) {
-                    radio.checked = true;
-                }
-            });
-        });
-    });
-    // Espera a que el documento (DOM) esté completamente cargado
-    document.addEventListener('DOMContentLoaded', function() {
+    // Función para renderizar los productos en la cuadrícula
+    function renderProducts(productos) {
+        const listaProductosDiv = document.getElementById('lista_productos');
+        listaProductosDiv.innerHTML = ''; // Limpiar productos anteriores
         
-        // 1. Selecciona el input de búsqueda
-        const buscador = document.getElementById('buscadorProductos');
-        
-        // 2. Selecciona TODAS las tarjetas de productos
-        //    Usamos la clase que acabamos de añadir
-        const tarjetas = document.querySelectorAll('.producto-filterable-card');
+        if (productos.length === 0) {
+            listaProductosDiv.innerHTML = '<div class="col-12 text-center text-muted">No se encontraron productos.</div>';
+            return;
+        }
 
-        // 3. Escucha el evento 'keyup' (cada vez que el usuario suelta una tecla)
-        buscador.addEventListener('keyup', function(evento) {
+        productos.forEach(producto => {
+            const productImage = producto.imagen ? `/storage/${producto.imagen}` : 'https://placehold.co/300x200/e2e2e2/9a9a9a?text=Sin+Imagen';
             
-            // 4. Obtiene el texto de búsqueda (en minúsculas para que no distinga)
-            const textoBusqueda = evento.target.value.toLowerCase();
+            // ARREGLO BUG: El name del input es "producto_id"
+            const productCardHTML = `
+                <div class="col-lg-4 col-md-6">
+                    <input class="form-check-input" type="radio" 
+                           name="producto_id" 
+                           id="producto_${producto.id}" 
+                           value="${producto.id}" 
+                           data-stock="${producto.stock}" 
+                           style="display:none;" required>
+                    
+                    <label class="card card-product text-center" for="producto_${producto.id}" style="cursor: pointer; margin-bottom: 0; border: 2px solid transparent;">
+                        <div class="card-image" style="height: 180px; overflow: hidden;">
+                            <img class="img-fluid" src="${productImage}" alt="${producto.nombre}" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title" style="font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${producto.nombre}
+                            </h5>
+                            <p class="card-description" style="font-size: 0.9rem;">
+                                Stock: ${producto.stock} | $${parseInt(producto.precio).toLocaleString('es-CL')}
+                            </p>
+                            <span class="btn btn-sm btn-outline-primary btn-round radio-select-indicator">Seleccionar</span>
+                        </div>
+                    </label>
+                </div>
+            `;
+            listaProductosDiv.innerHTML += productCardHTML;
+        });
 
-            // 5. Recorre cada tarjeta de producto
-            tarjetas.forEach(function(tarjeta) {
+        attachRadioListeners();
+    }
+
+    // Filtra los productos que ya están cargados
+    function filterAndRenderProducts(filtro) {
+        const filtroLower = filtro.toLowerCase();
+        const productosFiltrados = allProducts.filter(producto => 
+            producto.nombre.toLowerCase().includes(filtroLower)
+        );
+        renderProducts(productosFiltrados);
+    }
+
+    // Carga inicial de TODOS los productos
+    function fetchAllProducts() {
+        fetch(`/api/productos`)
+            .then(response => response.json())
+            .then(productos => {
+                allProducts = productos; 
+                renderProducts(allProducts);
+            })
+            .catch(error => console.error('Error al cargar productos:', error));
+    }
+    
+    // Asigna los listeners a los radio buttons
+    function attachRadioListeners() {
+        // ARREGLO BUG: Busca por 'name="producto_id"'
+        document.querySelectorAll('input[name="producto_id"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // ... (El código de selección visual es el mismo) ...
+                document.querySelectorAll('.card-product').forEach(c => {
+                    c.style.border = '2px solid transparent';
+                    c.querySelector('.radio-select-indicator').classList.remove('btn-primary');
+                    c.querySelector('.radio-select-indicator').classList.add('btn-outline-primary');
+                });
                 
-                // 6. Busca el nombre del producto dentro de la tarjeta
-                const nombreProducto = tarjeta.querySelector('.card-title').textContent.toLowerCase();
+                const card = this.nextElementSibling; 
+                card.style.border = '2px solid #f96332'; 
+                card.querySelector('.radio-select-indicator').classList.add('btn-primary');
+                card.querySelector('.radio-select-indicator').classList.remove('btn-outline-primary');
 
-                // 7. Compara y muestra/oculta la tarjeta
-                if (nombreProducto.includes(textoBusqueda)) {
-                    tarjeta.style.display = ''; // Muestra la tarjeta (display: block)
-                } else {
-                    tarjeta.style.display = 'none'; // Oculta la tarjeta
+                // Guarda los datos
+                productoSeleccionadoId = this.value;
+                stockDisponible = parseInt(this.dataset.stock, 10);
+                
+                // Habilita y valida la cantidad
+                const cantidadInput = document.getElementById('cantidad');
+                cantidadInput.max = stockDisponible;
+                cantidadInput.disabled = false;
+                if (cantidadInput.value > stockDisponible || cantidadInput.value <= 0) {
+                     cantidadInput.value = 1;
                 }
+                validarCantidad();
+                actualizarBotonRegistrar();
+                document.getElementById('error_no_seleccion').style.display = 'none';
             });
         });
-    });
-</script>
+    }
 
+    // Listener para el campo de búsqueda (filtra localmente)
+    document.getElementById('buscadorProductos').addEventListener('keyup', function() {
+        filterAndRenderProducts(this.value);
+    });
+
+    // Función de validación de cantidad (sin cambios)
+    function validarCantidad() {
+        const cantidadInput = document.getElementById('cantidad');
+        const errorStockDiv = document.getElementById('error_stock');
+        
+        if (cantidadInput.disabled) {
+            return false;
+        }
+        const cantidad = parseInt(cantidadInput.value, 10);
+
+        if (isNaN(cantidad) || cantidad <= 0) {
+            errorStockDiv.textContent = 'La cantidad debe ser al menos 1.';
+            errorStockDiv.style.display = 'block';
+            cantidadInput.classList.add('is-invalid');
+            return false;
+        } else if (cantidad > stockDisponible) {
+            errorStockDiv.textContent = `No hay suficiente stock. Disponible: ${stockDisponible}`;
+            errorStockDiv.style.display = 'block';
+            cantidadInput.classList.add('is-invalid');
+            return false;
+        } else {
+            errorStockDiv.style.display = 'none';
+            cantidadInput.classList.remove('is-invalid');
+            return true;
+        }
+    }
+
+    // Listener para el campo de cantidad (sin cambios)
+    const cantidadInput = document.getElementById('cantidad');
+    if(cantidadInput) {
+        cantidadInput.addEventListener('input', function() {
+            validarCantidad();
+            actualizarBotonRegistrar();
+        });
+    }
+
+    // Función para actualizar el botón de registro (sin cambios)
+    function actualizarBotonRegistrar() {
+        const btnRegistrar = document.getElementById('btn_registrar_venta');
+        const productoSeleccionado = productoSeleccionadoId !== null;
+        const cantidadValida = validarCantidad(); 
+
+        if (productoSeleccionado && cantidadValida) {
+            btnRegistrar.disabled = false;
+        } else {
+            btnRegistrar.disabled = true;
+        }
+    }
+
+    // ARREGLO BUG: El listener se adhiere al ID "formVenta"
+    // y ya no necesita inyectar el campo 'producto_id'.
+    document.getElementById('formVenta').addEventListener('submit', function(event) {
+        if (productoSeleccionadoId === null) {
+            document.getElementById('error_no_seleccion').style.display = 'block';
+            event.preventDefault(); 
+            return;
+        }
+        
+        if (!validarCantidad()) {
+             event.preventDefault();
+             return;
+        }
+        
+        // ¡Ya no es necesario añadir el 'producto_id' oculto!
+        // El radio button 'producto_id' se enviará automáticamente.
+    });
+
+    // Carga inicial de productos
+    fetchAllProducts();
+    // Validar estado inicial del botón
+    actualizarBotonRegistrar();
+
+</script>
 @endsection

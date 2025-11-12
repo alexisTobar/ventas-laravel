@@ -7,7 +7,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\VentaController;
-use App\Http\Controllers\ReporteController; // <-- AÑADE ESTA LÍNEA
+use App\Http\Controllers\ReporteController;
+
+// --- Añadido para la API de búsqueda ---
+use Illuminate\Http\Request;
+use App\Models\Producto;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,8 +19,6 @@ use App\Http\Controllers\ReporteController; // <-- AÑADE ESTA LÍNEA
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
-    // Si el usuario está logueado, que vaya al dashboard.
-    // Si no, que vea la página de bienvenida de Breeze (con login/register).
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
@@ -31,23 +33,44 @@ Route::get('/', function () {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     
-    // ¡ESTA ES LA LÍNEA CLAVE!
-    // Esta debe ser la ÚNICA definición de '/dashboard'.
+    // --- RUTAS PARA TODOS LOS USUARIOS (VENDEDORES Y ADMINS) ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // 2. Nuestras rutas de la aplicación
-    Route::resource('productos', ProductoController::class);
     Route::resource('ventas', VentaController::class);
-    Route::get('/ventas/exportar', [VentaController::class, 'exportar'])->name('ventas.exportar');
-    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-
-    // 3. Rutas de Perfil (de Breeze)
+    
+    // Rutas de Perfil (de Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+
+    // --- RUTAS SÓLO PARA ADMINS ---
+    // Usamos el 'admin' middleware que creamos
+    Route::middleware(['admin'])->group(function () {
+        
+        Route::resource('productos', ProductoController::class);
+        Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+        
+        // (Si en el futuro creas una ruta de "gestión de usuarios", iría aquí)
+    });
+    
+
+    // --- RUTA DE API PARA EL BUSCADOR DE VENTAS ---
+    // (Protegida por 'auth' para que solo usuarios logueados puedan usarla)
+    Route::get('/api/productos', function (Request $request) {
+        $filtro = $request->input('filtro');
+        $productos = Producto::query()
+            ->when($filtro, function ($query, $filtro) {
+                $query->where('nombre', 'like', '%' . $filtro . '%');
+            })
+            ->where('stock', '>', 0) // Solo productos con stock > 0
+            ->orderBy('nombre', 'asc')
+            ->get();
+        return response()->json($productos);
+    });
+
+    
 }); // <-- Fin del grupo 'auth'
 
 
-// Archivo de rutas de autenticación de Breeze (login, register, etc.)
+// Archivo de rutas de autenticación
 require __DIR__.'/auth.php';

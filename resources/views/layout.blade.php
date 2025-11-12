@@ -2,79 +2,169 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Ventas</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>Juegos Vikingos - POS</title>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
+    <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <link href="https://cdn.jsdelivr.net/npm/now-ui-dashboard@1.0.1/assets/css/now-ui-dashboard.min.css" rel="stylesheet" />
+
+    <style>
+        /* Pequeño ajuste para que el Chart.js sea responsivo */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Estilo para el separador 'Admin' */
+        .sidebar .nav-section {
+            padding: 0.5rem 1.8rem;
+            /* Alineado con los otros enlaces */
+            margin-top: 1rem;
+            color: #9A9A9A;
+            /* Un color gris para el texto */
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar .nav-section .sidebar-mini-icon {
+            display: inline-block;
+            width: 30px;
+            /* Alineación */
+            text-align: center;
+        }
+    </style>
 </head>
 
-<body>
+<body class="">
+    <div class="wrapper">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('dashboard') }}">Mi Tienda</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="sidebar" data-color="orange">
+            <div class="logo">
+                <a href="{{ route('dashboard') }}" class="simple-text logo-mini">
+                    JV
+                </a>
+                <a href="{{ route('dashboard') }}" class="simple-text logo-normal">
+                    Juegos Vikingos
+                </a>
+            </div>
+            <div class="sidebar-wrapper" id="sidebar-wrapper">
+                <ul class="nav">
+                    <li class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <a href="{{ route('dashboard') }}">
+                            <i class="now-ui-icons design_app"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
 
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('productos.index') }}">Gestión de Productos</a>
+                    <li class="{{ request()->routeIs('ventas.create') ? 'active' : '' }}">
+                        <a href="{{ route('ventas.create') }}">
+                            <i class="now-ui-icons shopping_cart-simple"></i>
+                            <p>Registrar Venta</p>
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('ventas.create') }}">Registrar Venta</a>
+                    <li class="{{ request()->routeIs('ventas.index') ? 'active' : '' }}">
+                        <a href="{{ route('ventas.index') }}">
+                            <i class="now-ui-icons files_paper"></i>
+                            <p>Historial de Ventas</p>
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('ventas.index') }}">Historial de Ventas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('reportes.index') }}">Reportes</a>
-                    </li>
-                </ul>
 
-                <ul class="navbar-nav ms-auto">
-                    @auth
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ Auth::user()->name }} </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Mi Perfil</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                        onclick="event.preventDefault(); this.closest('form').submit();">
-                                        Cerrar Sesión
-                                    </a>
-                                </form>
-                            </li>
-                        </ul>
+                    @if(auth()->check() && auth()->user()->role == 'admin')
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon">A</span>
+                        <span class="sidebar-normal">Admin</span>
                     </li>
-                    @else
-                    <li class="nav-item">
-                        <a href="{{ route('login') }}" class="nav-link">Log in</a>
+                    <li class="{{ request()->routeIs('productos.*') ? 'active' : '' }}">
+                        <a href="{{ route('productos.index') }}">
+                            <i class="now-ui-icons shopping_box"></i>
+                            <p>Gestión de Productos</p>
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="{{ route('register') }}" class="nav-link">Register</a>
+                    <li class="{{ request()->routeIs('reportes.index') ? 'active' : '' }}">
+                        <a href="{{ route('reportes.index') }}">
+                            <i class="now-ui-icons business_chart-pie-36"></i>
+                            <p>Reportes</p>
+                        </a>
                     </li>
-                    @endguest
+                    @endif
                 </ul>
             </div>
         </div>
-    </nav>
+        <div class="main-panel" id="main-panel">
 
-    <main class="container mt-4">
+            <nav class="navbar navbar-expand-lg navbar-transparent  bg-primary  navbar-absolute">
+                <div class="container-fluid">
+                    <div class="navbar-wrapper">
+                        <div class="navbar-toggle">
+                            <button type="button" class="navbar-toggler">
+                                <span class="navbar-toggler-bar bar1"></span>
+                                <span class="navbar-toggler-bar bar2"></span>
+                                <span class="navbar-toggler-bar bar3"></span>
+                            </button>
+                        </div>
+                        <a class="navbar-brand" href="#pablo">@yield('page-title', 'Dashboard')</a>
+                    </div>
 
-        @yield('content')
+                    <div class="collapse navbar-collapse justify-content-end" id="navigation">
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="now-ui-icons users_single-02"></i>
+                                    <p>
+                                        <span class="d-lg-none d-md-block">Usuario</span>
+                                    </p>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                                    <a class="dropdown-item" href="#">{{ Auth::user()->name }}</a>
+                                    <a class="dropdown-item" href="{{ route('profile.edit') }}">Mi Perfil</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{{ route('logout') }}"
+                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        Cerrar Sesión
+                                    </a>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            <div class="panel-header panel-header-sm">
+                </div>
+            <div class="content">
 
-    </main>
+                @yield('content') </div>
+            <footer class="footer">
+                <div class=" container-fluid ">
+                    <div class="copyright" id="copyright">
+                        &copy; <script>
+                            document.getElementById('copyright').appendChild(document.createTextNode(new Date().getFullYear()))
+                        </script>,
+                        Diseñado por Creative Tim. Creado por Juegos Vikingos.
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/now-ui-dashboard@1.0.1/assets/js/now-ui-dashboard.min.js"></script>
+
+    @yield('scripts')
+
 </body>
-
 </html>

@@ -1,50 +1,59 @@
 @extends('layout')
 
+@section('page-title', 'Reportes de Ventas')
+
 @section('content')
 
-<h1>Reportes de Ventas</h1>
-<p class="text-muted">Estadísticas clave de tu negocio</p>
-<hr>
-
-<div class="row">
-    
-    <div class="col-md-4 mb-4">
-        <div class="card text-white bg-primary h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Total de Ingresos (Histórico)</h5>
-            </div>
-            <div class="card-body text-center">
-                <h1 class="display-4 fw-bold">
-                    ${{ number_format($totalIngresos, 0, ',', '.') }}
-                </h1>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-8 mb-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Productos más vendidos (Unidades)</h5>
-            </div>
-            <div class="card-body" style="min-height: 300px;">
-                <canvas id="graficoPastel"></canvas>
+    <div class="row">
+        
+        <div class="col-lg-5 col-md-6">
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-5 col-md-4">
+                            <div class="icon-big text-center icon-warning">
+                                <i class="now-ui-icons business_bank text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="col-7 col-md-8">
+                            <div class="numbers">
+                                <p class="card-category">Total de Ingresos (Histórico)</p>
+                                <p class="card-title" style="font-size: 2em;">${{ number_format($totalIngresos, 0, ',', '.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-</div> <div class="row">
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Ventas Diarias (Últimos 30 días)</h5>
-            </div>
-            <div class="card-body" style="min-height: 300px;">
-                <canvas id="graficoBarras"></canvas>
+        <div class="col-lg-7 col-md-6">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-title">Productos más vendidos (Unidades)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="graficoPastel"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </div> <div class="row">
+        <div class="col-md-12">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-title">Ventas Diarias (Últimos 30 días)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="graficoBarras"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> @endsection
 
+@section('scripts')
 <script>
     // Espera a que el documento esté listo
     document.addEventListener('DOMContentLoaded', function() {
@@ -53,31 +62,32 @@
         const ctxPastel = document.getElementById('graficoPastel');
         if (ctxPastel) {
             new Chart(ctxPastel, {
-                type: 'doughnut', // Tipo de gráfico (dona/pastel)
+                type: 'doughnut',
                 data: {
-                  
                     labels: @json($pieLabels),
                     datasets: [{
                         label: 'Unidades Vendidas',
                         data: @json($pieData),
-                        backgroundColor: [ // Puedes añadir más colores
-                            'rgba(255, 99, 132, 0.7)',
-                            'rgba(54, 162, 235, 0.7)',
-                            'rgba(255, 206, 86, 0.7)',
-                            'rgba(75, 192, 192, 0.7)',
-                            'rgba(153, 102, 255, 0.7)',
-                            'rgba(255, 159, 64, 0.7)'
-                        ]
+                        backgroundColor: [ // Colores de Now UI
+                            '#f96332', // Naranja
+                            '#2ca8ff', // Azul
+                            '#00f2c3', // Verde
+                            '#ffb236', // Amarillo
+                            '#e14eca'  // Rosa
+                        ],
+                        borderWidth: 0 // Sin bordes
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Para que se ajuste al alto del card
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right', // Mueve las etiquetas a la derecha
+                            position: 'right',
+                            labels: { color: '#9A9A9A' } // Color de texto para el modo oscuro
                         }
-                    }
+                    },
+                    cutout: '70%' // Hace el "agujero" de la dona
                 }
             });
         }
@@ -87,29 +97,37 @@
         const ctxBarras = document.getElementById('graficoBarras');
         if (ctxBarras) {
             new Chart(ctxBarras, {
-                type: 'bar', // Tipo de gráfico (barras)
+                type: 'bar',
                 data: {
                     labels: @json($barLabels),
                     datasets: [{
                         label: 'Total Vendido ($)',
                         data: @json($barData),
-                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(44, 168, 255, 0.6)', // Azul Now UI
+                        borderColor: 'rgba(44, 168, 255, 1)',
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Para que se ajuste al alto del card
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false } // Ocultamos la leyenda
+                    },
                     scales: {
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                // Formatear el eje Y como dinero
+                                color: '#9A9A9A', // Color de texto para eje Y
                                 callback: function(value, index, values) {
                                     return '$' + new Intl.NumberFormat().format(value);
                                 }
-                            }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.1)' } // Líneas de la cuadrícula
+                        },
+                        x: {
+                            ticks: { color: '#9A9A9A' }, // Color de texto para eje X
+                            grid: { display: false } // Ocultamos cuadrícula X
                         }
                     }
                 }
@@ -118,5 +136,4 @@
 
     });
 </script>
-
 @endsection

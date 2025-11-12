@@ -11,6 +11,7 @@ class Venta extends Model
 
     protected $fillable = [
         'producto_id',
+        'user_id', // <-- AÑADE ESTA LÍNEA
         'cantidad',
         'total',
         'fecha',
@@ -18,7 +19,7 @@ class Venta extends Model
     ];
 
     public $timestamps = false;
-    
+
     /**
      * Define la relación: Una venta pertenece a un producto.
      */
@@ -35,4 +36,12 @@ class Venta extends Model
     protected $casts = [
         'fecha' => 'datetime', // <-- AÑADE ESTO
     ];
+
+    /**
+     * Define la relación: Una venta pertenece a un usuario (vendedor).
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
